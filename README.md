@@ -50,10 +50,14 @@ USAGE
 Options
 =======
 --help, -h              	show this help message and exit
+
 --url=URL, -u URL       	url of the remote webshell
+
 --lport=LOCAL_PORT, -l 	LOCAL_PORT
                         	local listening port
+
 --verbose, -v           	Verbose (outputs packet size)
+
 --buffer=BUFFERSIZE, -b BUFFERSIZE*
                         	HTTP request size (some webshels have limitations on
                         	the size)
@@ -63,8 +67,10 @@ No SOCKS Options
 Options are ignored if SOCKS proxy is used
 
 --no-socks, -n         		Do not use Socks Proxy
+
 --rport=REMOTE_PORT, -r	REMOTE_PORT
                         	remote port of service for the webshell to connect to
+
 --addr=REMOTE_IP, -a REMOTE_IP
 	                        address for remote webshell to connect to (default =
         	                127.0.0.1)
@@ -75,12 +81,14 @@ Tunnel connection through a local Proxy
 
 --up-proxy=UPPROXY, -x 	UPPROXY
                         	Upstream proxy (http://proxyserver.com:3128)
+
 --auth, -A              	Upstream proxy requires authentication
 
 Advanced Options
 ----------------
 --ping-interval=PING_DELAY, -q 	PING_DELAY
                         	webshprx pinging thread interval (default = 0.5)
+
 --start-ping, -s        	Start the pinging thread first - some services send
                         	data first (eg. SSH)
 
