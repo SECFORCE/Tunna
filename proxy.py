@@ -66,6 +66,9 @@ def main():
 
 	options=dict(Defaults.items() + vars(args).items()) if args else Defaults	#If missing options use Default
 
+	if options['remote_port']:
+		options['useSocks']=False
+
 	if not options['local_port']:
 		parser.print_help()
 		parser.error("Missing local port")

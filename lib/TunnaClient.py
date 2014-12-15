@@ -210,7 +210,7 @@ class TunnaClient():
 							print "[-] Unknown server OS"
 			
 				#2nd request: send connection options to webshell - In php this thread will stall
-				self.t = threading.Thread(target=self.Threaded_request, args=(remote_port,remote_ip))
+				self.t = threading.Thread(target=self.Threaded_request, args=(remote_port,remote_ip,self.options['useSocks']))
 				self.t.start()		#start the thread
 
 			except Exception, e:
