@@ -26,7 +26,7 @@ class SocksServer():
 	def run(self):
 		self.event.set() #all done
 		self.server.listen(50)
-#		self.server.setblocking(True)
+		self.server.setblocking(True)
 		wrapper_channel, address = self.server.accept()
 		self.iserver(wrapper_channel)
 		wrapper_channel.close()
