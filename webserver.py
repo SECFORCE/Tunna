@@ -264,7 +264,6 @@ class WebServer():
 				if self.debug > 3: print "[Debug] starting socks executable"
 				#./Uploaded Executable random_port
 				self.fileRun(session,SocksServerSocket.getsockname()[1])
-				time.sleep(1)
 			else:	#else start proxy in thread
 				if self.debug > 3: print "[Debug] starting internal socks"
 				event = threading.Event()
@@ -280,7 +279,7 @@ class WebServer():
 				event.wait() 
 				
 				session['SocksThread'] = SocksThread
-
+			time.sleep(1)
 			sock = socket.socket()
 			sock.connect(('localhost',SocksServerSocket.getsockname()[1]))
 			sock.setblocking(0)	
