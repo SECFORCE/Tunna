@@ -49,7 +49,7 @@ class TunnaClient():
 		print "[+] Starting Ping thread"
 		#self.ptc=threading.Condition()
 		wait=True
-		p=0.5
+		p=0.1
 		while 1:							#loop forever
 			if wait:					
 				self.ptc.acquire()
