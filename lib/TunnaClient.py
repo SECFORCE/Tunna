@@ -49,9 +49,9 @@ class TunnaClient():
 		print "[+] Starting Ping thread"
 		#self.ptc=threading.Condition()
 		wait=True
-		p=0.5
+		p=0.1
 		while 1:							#loop forever
-			if wait:					
+			if wait and (self.ping_delay > 0):					
 				self.ptc.acquire()
 				self.ptc.wait(self.ping_delay+self.penalty)		#send ping to server interval + penalty
 				self.ptc.release()
@@ -210,7 +210,7 @@ class TunnaClient():
 							print "[-] Unknown server OS"
 			
 				#2nd request: send connection options to webshell - In php this thread will stall
-				self.t = threading.Thread(target=self.Threaded_request, args=(remote_port,remote_ip))
+				self.t = threading.Thread(target=self.Threaded_request, args=(remote_port,remote_ip,self.options['useSocks']))
 				self.t.start()		#start the thread
 
 			except Exception, e:

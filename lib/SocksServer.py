@@ -26,6 +26,7 @@ class SocksServer():
 	def run(self):
 		self.event.set() #all done
 		self.server.listen(50)
+		self.server.setblocking(True)
 		wrapper_channel, address = self.server.accept()
 		self.iserver(wrapper_channel)
 		wrapper_channel.close()
@@ -182,7 +183,10 @@ class SocksServer():
 							
 							self.lock.acquire()
 							try:
-								wrapper_channel.send((struct.pack('!HH',SocketDict[self.srcPort(s)][0],len(data))+data)) 
+								wrapper_channel.send((struct.pack('!HH',SocketDict[self.srcPort(s)][0],len(data))+data))
+							except (TypeError,socket.error, KeyError) as e:
+								print "[-] Send Failed:", e
+								pass
 							finally:
 								if debug >4: print "[T] Write to channel releasing 1"
 								self.lock.release()
