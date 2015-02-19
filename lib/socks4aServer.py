@@ -174,8 +174,8 @@ class SocksServer():
 							else: # In socket not in list - Try Socks
 								if debug > 4: print "[D] Starting Connection Thread"
 								Thread = threading.Thread(
-									target=self.establishConnection(s,data,sockets,SocketDict,inSrcPort)
-									)
+									target=self.establishConnection, args=(s,data,sockets,SocketDict,inSrcPort)
+									).start()
 								#self.establishConnection(s,data,sockets,SocketDict,inSrcPort)
 						else: #inSrcPort send no data - Port Closed 
 							if debug > 3: print "\t Close Socket: ", inSrcPort
