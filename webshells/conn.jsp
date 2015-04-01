@@ -240,6 +240,6 @@ if(request.getParameter("proxy") == "" ){
 	}
 }
 else{
-	os.write("Tunna v1.1a".getBytes()) //Version 1.1a
+	os.write("Tunna v1.1a".getBytes()); //Version 1.1a
 }
 %>
