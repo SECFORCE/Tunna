@@ -6,7 +6,8 @@ Tunna_Defaults ={
 	'interval':0.2,
 	'bind':'0.0.0.0', 	# Change to localhost for binding Tunna to localport	
 	'useSocks':True,	# Will use Socks Proxy if available
-
+	'ignoreServerCert':True,
+	
 	# Default Remote Settings
 	'local_port':0,
 	'remote_port':0,
