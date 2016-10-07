@@ -1,6 +1,6 @@
 #Tunna v1.1a
 import select 
-import urllib2
+import urllib2, ssl
 import cookielib
 import gzip, zlib, StringIO
 from time import time, sleep, asctime
@@ -229,7 +229,13 @@ class TunnaClient():
 						handler.append(urllib2.ProxyHandler({'http':self.options['upProxy']}))
 					else:
 						handler.append(urllib2.ProxyHandler({'https':self.options['upProxy']}))
-					
+
+			if self.options['ignoreServerCert']:
+				ctx = ssl.create_default_context()
+				ctx.check_hostname = False
+				ctx.verify_mode = ssl.CERT_NONE
+				handler.append(urllib2.HTTPSHandler(context=ctx))
+			
 			opener = urllib2.build_opener(*handler)
 			
 			opener.addheaders = [('Accept-encoding', 'gzip')]
