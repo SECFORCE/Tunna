@@ -20,7 +20,10 @@ Tunna_Defaults ={
 
 	#! Not to be changed
 	'ProxyFileWin':'lib/socks4aServer.exe',
-	'ProxyFilePy':'lib/socks4aServer.py'
+	'ProxyFilePy':'lib/socks4aServer.py',
+
+	#! HTTP headers
+	'Cookie':'',
 }
 
 Webserver_Defaults ={
