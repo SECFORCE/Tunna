@@ -182,6 +182,7 @@ class TunnaClient():
 			remote_ip = options['remote_ip']
 			remote_port = options['remote_port']
 			verbose = options['verbose']
+			self.cookie = options['cookie']
 
 			self.url=url
 
@@ -248,7 +249,7 @@ class TunnaClient():
 			kargs['url']=url
 			if data:  kargs['data']=data	#Will do a GET if no data else POST
 			if headers:  kargs['headers']=headers
-			else: kargs['headers']={'Content-Type':'application/octet-stream'}
+			else: kargs['headers']={'Content-Type':'application/octet-stream','Cookie':self.cookie}
 			
 			#Make Request
 			f=opener.open(urllib2.Request(**kargs))

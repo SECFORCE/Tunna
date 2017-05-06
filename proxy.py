@@ -61,6 +61,7 @@ def main():
 	advancedGroup.add_option('-q','--ping-interval', help='webshprx pinging thread interval (default = 0.5)', dest='ping_delay', action='store', type='float', default=Defaults['ping_delay'])
 	advancedGroup.add_option('-s','--start-ping', help='Start the pinging thread first - some services send data first (eg. SSH)', dest='start_p_thread', action='store_true', default=Defaults['start_p_thread'])
 	advancedGroup.add_option('-c','--verify-server-cert', help='Verify Server Certificate', dest='start_p_thread', action='store_false', default=Defaults['ignoreServerCert'])
+	advancedGroup.add_option('-C','--cookie', help='Request cookies', dest='cookie', action='store', default=Defaults['Cookie'])
 
 	parser.add_option_group(advancedGroup)
 
