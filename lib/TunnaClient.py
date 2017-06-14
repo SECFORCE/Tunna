@@ -245,8 +245,6 @@ class TunnaClient():
 
 		def HTTPreq(self,url,data=None,headers=None):
 			opener=self.opener
-                        if self.options['bauth']:
-                            headers={'Authorization': "Basic %s" % self.bauth}
 
 			kargs={}
 			kargs['url']=url
@@ -254,6 +252,9 @@ class TunnaClient():
 			if headers:  kargs['headers']=headers
 			else: kargs['headers']={'Content-Type':'application/octet-stream','Cookie':self.cookie}
 
+			if self.options['bauth']:
+                            kargs['headers'].update({'Authorization': "Basic %s" % self.bauth})
+				
 			#Make Request
 			f=opener.open(urllib2.Request(**kargs))
 
