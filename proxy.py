@@ -1,6 +1,6 @@
 #!/usr/bin/python
-#  _____                        
-# |_   _|   _ _ __  _ __   __ _ 
+#  _____
+# |_   _|   _ _ __  _ __   __ _
 #   | || | | | '_ \| '_ \ / _` |
 #   | || |_| | | | | | | | (_| |
 #   |_| \__,_|_| |_|_| |_|\__,_|
@@ -15,12 +15,13 @@ import threading, thread
 import optparse
 import sys
 import urllib2
-from lib.TunnaClient import TunnaClient 
+from base64 import b64encode
+from lib.TunnaClient import TunnaClient
 
 from settings import Tunna_Defaults as Defaults
 
 DEBUG=0
-		
+
 def banner():
 	print "  _____                        "
 	print " |_   _|   _ _ __  _ __   __ _ "
@@ -62,6 +63,7 @@ def main():
 	advancedGroup.add_option('-s','--start-ping', help='Start the pinging thread first - some services send data first (eg. SSH)', dest='start_p_thread', action='store_true', default=Defaults['start_p_thread'])
 	advancedGroup.add_option('-c','--verify-server-cert', help='Verify Server Certificate', dest='start_p_thread', action='store_false', default=Defaults['ignoreServerCert'])
 	advancedGroup.add_option('-C','--cookie', help='Request cookies', dest='cookie', action='store', default=Defaults['Cookie'])
+	advancedGroup.add_option('-t','--authentication', help='Basic authentication', dest='bauth', action='store_true')
 
 	parser.add_option_group(advancedGroup)
 
@@ -82,14 +84,14 @@ def main():
 		username=raw_input("Proxy Authentication\nUsername:")
 		from getpass import getpass
 		passwd=getpass("Password:")
-		
+
 		if not options['upProxy']:
 			parser.error("Missing Proxy URL")
 		else:
 			from urlparse import urlparse
 			u=urlparse(options['upProxy'])
 			prx="%s://%s:%s@%s" % (u.scheme,username,passwd,u.netloc)
-			
+
 			password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
 			password_mgr.add_password(None,prx,username,passwd)
 
@@ -98,7 +100,13 @@ def main():
 			proxy_digest_handler = urllib2.ProxyDigestAuthHandler(password_mgr)
 
 			options['upProxyAuth']=[proxy_handler,proxy_basic_handler,proxy_digest_handler]
-	
+        if options['bauth']:            # Basic authentication
+            username=raw_input("Basic Authentication\nUsername:")
+            from getpass import getpass
+            passwd=getpass("Password:")
+
+            options['bauth'] = b64encode('%s:%s' % (username, passwd))
+
 	try:
 		T=TunnaClient(options)
 		TunnaThread = threading.Thread(name='TunnaThread', target=T.run(), args=(options,))
@@ -112,7 +120,7 @@ def main():
 		if DEBUG > 0:
 			import traceback
 			print traceback.format_exc()
-		
+
 		if 'T' in locals():
 			T.__del__()
 		if 'TunnaThread' in locals() and TunnaThread.isAlive(): TunnaThread._Thread__stop()
@@ -121,7 +129,7 @@ def main():
 		if DEBUG > 0:
 			import traceback
 			print traceback.format_exc()
-		print "General Exception:",e 
+		print "General Exception:",e
 
 def startTunna(options):
 	T=TunnaClient(options)
