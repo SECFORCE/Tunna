@@ -93,6 +93,8 @@ Advanced Options
                         	data first (eg. SSH)
 
 `--cookie, -C`        	Request cookies
+`--authentication, -t`    Basic authentication
+
 
 * See limitations
 
