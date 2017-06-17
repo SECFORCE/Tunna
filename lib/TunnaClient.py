@@ -250,11 +250,14 @@ class TunnaClient():
 			kargs['url']=url
 			if data:  kargs['data']=data	#Will do a GET if no data else POST
 			if headers:  kargs['headers']=headers
-			else: kargs['headers']={'Content-Type':'application/octet-stream','Cookie':self.cookie}
+			else: kargs['headers']={'Content-Type':'application/octet-stream'}
+
+                        if self.options['cookie']:
+                            kargs['headers'].update({'Cookie':self.cookie})
 
 			if self.options['bauth']:
                             kargs['headers'].update({'Authorization': "Basic %s" % self.bauth})
-				
+
 			#Make Request
 			f=opener.open(urllib2.Request(**kargs))
 

@@ -94,6 +94,9 @@ Advanced Options
 
 `--cookie, -C`        	Request cookies
 
+`--authentication, -t`    Basic authentication
+
+
 * See limitations
 
 example usage:
