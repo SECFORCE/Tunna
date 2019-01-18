@@ -168,7 +168,7 @@ if (Request.Url.Query.StartsWith("?proxy")){				//XXX:Stupid hack but works
 				return;
 				}
 			}
-		else{									
+		else{
 			Socket socket = Session["socket"] as Socket;
 			
 			//Read data from request and write to socket
@@ -189,7 +189,7 @@ if (Request.Url.Query.StartsWith("?proxy")){				//XXX:Stupid hack but works
 					//Welcome to C trim
 					byte[] received = new byte[bytesRead];
 					Array.Copy(receiveBuffer, received , bytesRead);
-					
+					Response.ContentType = "application/octet-stream";
 					Response.BinaryWrite(received);
 					}
 				else {
