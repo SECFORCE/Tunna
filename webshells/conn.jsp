@@ -192,9 +192,9 @@ if(request.getParameter("proxy") == "" ){
 			return;
 			}
 		else{
-			response.setContentType("application/oclet-stream");
+			response.setContentType("application/octet-stream");
 			//Allocate buffers for socket IO
-			ByteBuffer dataIn = ByteBuffer.allocate(bufferSize);		
+			ByteBuffer dataIn = ByteBuffer.allocate(bufferSize);
 			ByteBuffer dataOut = ByteBuffer.allocate(bufferSize);
 			
 			try{
