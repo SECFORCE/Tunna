@@ -139,7 +139,13 @@ LIMITATIONS / KNOWN BUGS / HACKS
 				* More than that created problems with bytes missing at the remote socket
 				eg: ruby proxy.rb -u http://10.3.3.1/conn.jsp -l 4444 -r 3389 -b 1024 -v
 
-		* Sockets not enabled by default php windows (IIS + PHP)
+		* Sockets not enabled by default:
+			php windows (IIS + PHP)
+			XAMPP Windows
+			php linux (PHP bultin web server/apache + PHP)
+		If you have the error Uncaught Error: Call to undefined function socket_create()
+		see https://stackoverflow.com/questions/6137823/fatal-error-call-to-undefined-function-socket-create
+		
 		
 		* Return cariages on webshells (outside the code): 
 			get sent on responses / get written on local socket --> corrupt the packets
