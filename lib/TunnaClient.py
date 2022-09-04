@@ -336,7 +336,7 @@ class TunnaClient():
             # send options
             resp = self.HTTPreq(url)
 
-            if (resp[:4] == '[OK]'):  # If ok is received (non-php webshell): Thread not needed
+            if (resp[:4] == b'[OK]'):  # If ok is received (non-php webshell): Thread not needed
                 print('[-] Keep-alive thread not required')
             # if ok/proxy is not received something went wrong (if nothing is received: it's a PHP webshell)
             else:
